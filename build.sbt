@@ -4,7 +4,8 @@ lazy val root = (project in file(".")).
       organization := "com.pagantis",
       scalaVersion := "2.12.7"
     )),
-    name := "flow-ggeocode"
+    name := "flow-ggeocode",
+    mainClass in assembly := Some("com.pagantis.singer.flows.FlowGGeocode")
   )
 
 libraryDependencies ++= Seq(

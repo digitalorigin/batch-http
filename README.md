@@ -1,12 +1,12 @@
 # FlowGGeocode
 A [Singer.io](https://github.com/singer-io/getting-started) tap for processing addresses on the [Google geocoding service](https://developers.google.com/maps/documentation/geocoding/start). 
-The flow accepts two types of records or `stream`s. In the `raw_addresses` stream, the flow expects the address in the
+The flow accepts two types of records or `stream`s. In the `raw_address` stream, the flow expects the address in the
 format `address`, `city` and `zip_code`, whilst in the `normalized_address` stream one can pass the `street` and `nr` on
 separate fields. The flow makes a request to the geocoding service per record and outputs the full response.
 
 # Example
 ```bash
-echo '{ "type": "RECORD", stream: "raw_addresses", "record": {"address": "Avenida Gran Vía, 12", "city": "Barcelona", "zip_code": "08013"} }' \
+echo '{ "type": "RECORD", "stream": "raw_address", "record": {"address": "Avenida Gran Vía, 12", "city": "Barcelona", "zip_code": "08013"} }' \
  flow-ggeocode
 # will make a request https://maps.googleapis.com/maps/api/geocode/json?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA&key=YOUR_API_KEY
 # and one record will be output (in one line)
