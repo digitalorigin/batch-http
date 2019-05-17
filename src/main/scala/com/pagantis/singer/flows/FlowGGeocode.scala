@@ -12,7 +12,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.Success
 
-object GGeocodeFlow extends App {
+object FlowGGeocode extends App {
 
   val clazz = getClass.getName
 
