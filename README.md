@@ -103,6 +103,17 @@ so we use the keys in Spanish in the input records
 echo '{ "type": "RECORD", "stream": "normalized_address", "record": {"calle": "Avenida Gran Vía", "numero": "12", "ciudad": "Barcelona", "codigo_postal": "08013"} }' \
  flow-ggeocode
 ```
+A `stream` configuration key can be provided as well to override the input stream name
+```hocon
+flow {
+  stream = "normalized_address"
+}
+```
+so the flow understands a record if the stream name is not `raw_address` or `normalized_address`
+```bash
+echo '{ "type": "RECORD", "stream": "addresses_export", "record": {"calle": "Avenida Gran Vía", "numero": "12", "ciudad": "Barcelona", "codigo_postal": "08013"} }' \
+ flow-ggeocode
+```
 
 # Build and Run
 This is an [SBT](https://www.scala-sbt.org/) project. If you don't have sbt installed, do so by running `brew install sbt`

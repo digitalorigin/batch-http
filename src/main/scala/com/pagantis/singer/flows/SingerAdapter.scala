@@ -52,14 +52,15 @@ object SingerAdapter {
   import net.ceedubs.ficus.Ficus._
   def fromConfig = {
     val config = ConfigFactory.load().getConfig("flow")
+    val streamName = config.as[Option[String]]("stream")
     config.as[Option[Map[String,String]]]("mappings") match {
-      case Some(mappings) => new SingerAdapter(mappings)
-      case None => new SingerAdapter()
+      case Some(mappings) => new SingerAdapter(recordMappings = mappings, streamName = streamName)
+      case None => new SingerAdapter(streamName = streamName)
     }
   }
 }
 
-class SingerAdapter(recordMappings: Map[String, String] = Map[String,String]()) {
+class SingerAdapter(recordMappings: Map[String, String] = Map[String,String](), streamName: Option[String] = None) {
   import JsonProtocol._
   import spray.json._
 
@@ -72,7 +73,7 @@ class SingerAdapter(recordMappings: Map[String, String] = Map[String,String]()) 
   }
 
   def parseRecord(line: String) = {
-    val jsonLine = line.parseJson.asJsObject
+    val jsonLine = overrideStream(line.parseJson).asJsObject
     val address = jsonLine.fields("stream") match {
       case JsString("raw_address") =>
         applyMappings(line.parseJson.asJsObject.fields("record")).convertTo[RawAddress]
@@ -102,6 +103,23 @@ class SingerAdapter(recordMappings: Map[String, String] = Map[String,String]()) 
           case None => (key, value)
         }
     }.toJson
+  }
+
+  /**
+    * Override the stream value with [[streamName]] value if present
+    *
+    * @param jsValue The json object whose stream we want to override
+    * @return
+    */
+  def overrideStream(jsValue: JsValue) = {
+    streamName match {
+      case Some(newValue) =>
+        jsValue.asJsObject.fields.map {
+          case ("stream", JsString(_)) => ("stream", JsString(newValue))
+          case (otherKey, jsonValue) => (otherKey, jsonValue)
+        }.toJson
+      case None => jsValue
+    }
   }
 
 }

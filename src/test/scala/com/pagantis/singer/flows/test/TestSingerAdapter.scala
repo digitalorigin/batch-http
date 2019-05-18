@@ -232,4 +232,29 @@ class TestSingerAdapter extends FlatSpec with Matchers {
     )
   }
 
+  "SingerAdapter" should "parse an Address with mappings and stream override" in {
+    val singerAdapterWithMapping = new SingerAdapter(Map("$.address.path" -> "address"), Some("raw_address"))
+    singerAdapterWithMapping.parseRecord(
+      """
+        |{
+        | "type": "RECORD",
+        | "stream": "other-stream-name",
+        | "time_extracted": null,
+        | "address_id": "someid",
+        | "record": {
+        |   "$.address.path": "Paseo Circumvalación 32",
+        |   "city": "Gelida",
+        |   "zip_code": "08790"
+        | }
+        |}
+      """.stripMargin) shouldBe AddressWrapper(
+      Some("someid"),
+      RawAddress(
+        address = "Paseo Circumvalación 32",
+        city = Some("Gelida"),
+        zip_code = Some("08790")
+      )
+    )
+  }
+
 }
