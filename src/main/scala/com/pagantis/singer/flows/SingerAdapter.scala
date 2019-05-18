@@ -3,6 +3,7 @@ package com.pagantis.singer.flows
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+import com.typesafe.config.ConfigFactory
 import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
 
 trait SingerMessage {
@@ -48,11 +49,17 @@ object JsonProtocol extends DefaultJsonProtocol {
 }
 
 object SingerAdapter {
-  def fromConfig =
-    new SingerAdapter
+  import net.ceedubs.ficus.Ficus._
+  def fromConfig = {
+    val config = ConfigFactory.load().getConfig("flow")
+    config.as[Option[Map[String,String]]]("mappings") match {
+      case Some(mappings) => new SingerAdapter(mappings)
+      case None => new SingerAdapter()
+    }
+  }
 }
 
-class SingerAdapter {
+class SingerAdapter(recordMappings: Map[String, String] = Map[String,String]()) {
   import JsonProtocol._
   import spray.json._
 
@@ -68,9 +75,9 @@ class SingerAdapter {
     val jsonLine = line.parseJson.asJsObject
     val address = jsonLine.fields("stream") match {
       case JsString("raw_address") =>
-        line.parseJson.asJsObject.fields("record").convertTo[RawAddress]
+        applyMappings(line.parseJson.asJsObject.fields("record")).convertTo[RawAddress]
       case JsString("normalized_address") =>
-        line.parseJson.asJsObject.fields("record").convertTo[Address].asRawAddress
+        applyMappings(line.parseJson.asJsObject.fields("record")).convertTo[Address].asRawAddress
     }
     val addressId = jsonLine.fields.get("address_id") match {
       case Some(JsString(id)) => Some(id)
@@ -81,6 +88,21 @@ class SingerAdapter {
 
   def toJsonString(ggeoRecord: GGeoRecord): String =
     ggeoRecord.toJson.compactPrint
+
+  /**
+    * Apply the mappings defined in the configuration file to the records keys
+    * @param jsValue The input json record
+    * @return
+    */
+  def applyMappings(jsValue: JsValue) = {
+    jsValue.asJsObject.fields.map {
+      case (key, value) =>
+        recordMappings.get(key) match {
+          case Some(newKey) => (newKey, value)
+          case None => (key, value)
+        }
+    }.toJson
+  }
 
 }
 

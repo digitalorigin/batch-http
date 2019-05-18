@@ -15,7 +15,6 @@ import spray.json.JsValue
 
 import scala.concurrent.ExecutionContext
 import scala.util.Try
-import net.ceedubs.ficus.Ficus._
 
 object GGeocode {
   def fromConfig(implicit ac : ActorSystem, am : ActorMaterializer, ec : ExecutionContext) : Flow[AddressWrapper, (JsValue, AddressWrapper), NotUsed] = {
@@ -41,7 +40,7 @@ class GGeocode(apiKey : String) {
   private [flows] def createGoogleMapsRequest(addressWrapper : AddressWrapper) = {
     HttpRequest(
       method = HttpMethods.GET,
-      uri = Uri(s"/maps/api/geocode/json?region=es&language=es&address=${URLEncoder.encode(addressWrapper.address.simpleStringRepresentation)}&key=$apiKey")
+      uri = Uri(s"/maps/api/geocode/json?region=es&language=es&address=${URLEncoder.encode(addressWrapper.address.simpleStringRepresentation, "UTF-8")}&key=$apiKey")
     ) -> addressWrapper
   }
 

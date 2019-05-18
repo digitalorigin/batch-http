@@ -195,4 +195,41 @@ class TestSingerAdapter extends FlatSpec with Matchers {
     ) shouldBe """{"type":"RECORD","stream":"ggeocoding","time_extracted":"2019-04-23T12:00:00Z","record":{"some_key":"some_key"}}"""
   }
 
+  "SingerAdapter" should "map record keys when mapping configuration is provided" in {
+    val singerAdapterWithMapping = new SingerAdapter(Map("$.address.path" -> "address"))
+    singerAdapterWithMapping.applyMappings(
+      JsObject(
+        "$.address.path" -> JsString("Paseo Circumvalación 32"),
+        "other_key" -> JsString("some value")
+      )
+    ) shouldBe JsObject(
+      "address" -> JsString("Paseo Circumvalación 32"),
+      "other_key" -> JsString("some value")
+    )
+  }
+  "SingerAdapter" should "parse an Address with mappings" in {
+    val singerAdapterWithMapping = new SingerAdapter(Map("$.address.path" -> "address"))
+    singerAdapterWithMapping.parseRecord(
+      """
+        |{
+        | "type": "RECORD",
+        | "stream": "raw_address",
+        | "time_extracted": null,
+        | "address_id": "someid",
+        | "record": {
+        |   "$.address.path": "Paseo Circumvalación 32",
+        |   "city": "Gelida",
+        |   "zip_code": "08790"
+        | }
+        |}
+      """.stripMargin) shouldBe AddressWrapper(
+      Some("someid"),
+      RawAddress(
+        address = "Paseo Circumvalación 32",
+        city = Some("Gelida"),
+        zip_code = Some("08790")
+      )
+    )
+  }
+
 }

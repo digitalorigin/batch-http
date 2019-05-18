@@ -83,6 +83,27 @@ echo '{ "type": "RECORD", "stream": "raw_address", "record": {"address": "Avenid
         }
 ```
 
+# Mappings
+A `mappings` key can be defined in the configuration to apply a set of mapping to the input record keys. This can be 
+helpful for adapting the output of a singer tap or flow so it can be understood for geo-coding. For example, the following
+`mappings` can be defined in the `application.conf`
+```hocon
+flow {
+  mappings {
+        "calle": "street"
+        "direccion": "address"
+        "numero": "nr"
+        "ciudad": "city"
+        "codigo_postal": "zip_code"
+  }
+}
+````
+so we use the keys in Spanish in the input records
+```bash
+echo '{ "type": "RECORD", "stream": "normalized_address", "record": {"calle": "Avenida Gran Vía", "numero": "12", "ciudad": "Barcelona", "codigo_postal": "08013"} }' \
+ flow-ggeocode
+```
+
 # Build and Run
 This is an [SBT](https://www.scala-sbt.org/) project. If you don't have sbt installed, do so by running `brew install sbt`
 on Mac. Then you can compile and package the project with
