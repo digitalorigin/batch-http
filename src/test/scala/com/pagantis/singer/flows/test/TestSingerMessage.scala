@@ -8,6 +8,7 @@ import spray.json.DefaultJsonProtocol
 class TestSingerMessage extends FlatSpec with Matchers with DefaultJsonProtocol {
 
   val line = """{"type":"RECORD","stream":"geocode","record":{"address":"1600 Amphitheatre Parkway, Mountain View, CA"}}"""
+  val lines = """{"type":"RECORD","stream":"geocode","record":{"address": "1600 Amphitheatre Parkway","city": "Mountain View","zipcode": "9090"}}"""
 
   val singerMessage = SingerMessage(
     `type` = "RECORD",

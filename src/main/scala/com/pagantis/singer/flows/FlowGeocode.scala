@@ -9,10 +9,10 @@ import akka.stream.scaladsl.StreamConverters
 import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor}
 import scala.util.{Failure, Success, Try}
 
-object FlowGGeocode extends App {
+object FlowGeocode extends App {
 
   val clazz = getClass.getName
 
@@ -23,13 +23,16 @@ object FlowGGeocode extends App {
   implicit val ec: ExecutionContextExecutor = system.dispatcher
 
   val config = ConfigFactory.load()
+
   val endpoint = config.getString("flow.endpoint")
+  val parallelism = config.getInt("flow.parallelism")
 
   val startTime = System.nanoTime()
 
   def parseResponse(triedResponse: (Try[HttpResponse], Address))(implicit am: Materializer) =
     triedResponse match {
-      case (Success(response), address) => Geocode.fromHttpResponse(response)
+      case (Success(response), address) =>
+        Geocode.fromHttpResponse(response).map(_.toSingerMessage(address))
       case (Failure(exception), address) => {
         throw exception
       }
@@ -57,7 +60,8 @@ object FlowGGeocode extends App {
       .log(clazz)
       .via(Http().cachedHostConnectionPoolHttps[Address](host = endpoint))
       .log(clazz)
-      .map(parseResponse(_))
+      .mapAsync(parallelism)(parseResponse(_))
+      .map(SingerMessage.toLine)
       .log(clazz)
       .runForeach(println(_))
 

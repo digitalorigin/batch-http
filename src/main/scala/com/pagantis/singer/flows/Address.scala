@@ -67,7 +67,7 @@ case class Geocode(response: JsValue) {
       SingerMessage(
         record = JsObject(
           "address" -> contextAsJson,
-          "geocoding" -> response
+          "geocode" -> response
         )
       )
   }
