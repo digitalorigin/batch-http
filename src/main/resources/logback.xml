@@ -6,20 +6,14 @@
             <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</Pattern>
         </encoder>
     </appender>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>%msg%n</Pattern>
-        </encoder>
-    </appender>
-    <logger name="com.pagantis" level="DEBUG"
+    <logger name="com.pagantis" level="${LOG_LEVEL}"
             additivity="false">
         <appender-ref ref="STDERR" />
     </logger>
-    <logger name="singer.logger" level="DEBUG"
-            additivity="false">
-        <appender-ref ref="STDOUT" />
+    <logger name="akka" level="${LOG_LEVEL}" additivity="false">
+        <appender-ref ref="STDERR" />
     </logger>
-    <root level="INFO">
+    <root level="${LOG_LEVEL}">
         <appender-ref ref="STDERR" />
     </root>
 </configuration>
