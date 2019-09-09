@@ -6,7 +6,7 @@ lazy val root = (project in file(".")).
       organization := "com.pagantis",
       scalaVersion := "2.12.7"
     )),
-    name := "flow-geocode"
+    name := "flow-http"
   )
 
 trapExit := false

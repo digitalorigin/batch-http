@@ -1,15 +1,18 @@
-# FlowGGeocode
-A [Singer.io](https://github.com/singer-io/getting-started) tap for processing addresses on the [Google geocoding service](https://developers.google.com/maps/documentation/geocoding/start). 
-The flow accepts two types of records or `stream`s. In the `raw_address` stream, the flow expects the address in the
-format `address`, `city` and `zip_code`, whilst in the `normalized_address` stream one can pass the `street` and `nr` on
-separate fields. The flow makes a request to the geocoding service per record and outputs the full response.
+# BatchHttp
+A tool for processing data batches through a REST API. It reads the `stdin` for JSON lines representing HTTP calls,
+it makes the call and outputs input and output also in JSON format. For example, when passed a JSON string `{"query": {"address": "1600 Amphitheatre Parkway, Mountain View, 9090", "region":"es", "language":"es"}`,
+it will make a request to `https://maps.googleapis.com/maps/api/geocode/json?region=es&language=es&address=1600+Amphitheatre+Parkway,+Mountain+View,+CA`
+and return the output as a JSON line with both the query and the API response body, provided the `endpoint` and `path` configuration values are set to
+`https://maps.googleapis.com` and `maps/api/geocode/json` respectively.
 
 # Example
 ```bash
-echo '{ "type": "RECORD", "stream": "raw_address", "record": {"address": "Avenida Gran Vía, 12", "city": "Barcelona", "zip_code": "08013"} }' \
- flow-ggeocode
-# will make a request https://maps.googleapis.com/maps/api/geocode/json?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA&key=YOUR_API_KEY
-# and one record will be output (in one line)
+echo '{"query": {"address": "1600 Amphitheatre Parkway, Mountain View, 9090", "region":"es", "language":"es"}' \
+ | flow-ggeocode
+# will make a request to <endpoint><path>?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA
+# where <endpoint> and <path> are configurable in the application.conf file, and output another JSON
+# kjn
+
 ```
 
 ```json
@@ -84,7 +87,7 @@ echo '{ "type": "RECORD", "stream": "raw_address", "record": {"address": "Avenid
 ```
 
 # Mappings
-A `mappings` key can be defined in the configuration to apply a set of mapping to the input record keys. This can be 
+A `mappings` key can be defined in the configuration to apply a set of mapping to the input record keys. This can be
 helpful for adapting the output of a singer tap or flow so it can be understood for geo-coding. For example, the following
 `mappings` can be defined in the `application.conf`
 ```hocon

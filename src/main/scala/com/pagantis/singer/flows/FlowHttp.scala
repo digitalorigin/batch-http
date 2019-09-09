@@ -12,7 +12,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor}
 import scala.util.{Failure, Success, Try}
 
-object FlowGeocode extends App {
+object FlowHttp extends App {
 
   val clazz = getClass.getName
 
@@ -29,13 +29,11 @@ object FlowGeocode extends App {
 
   val startTime = System.nanoTime()
 
-  def parseResponse(triedResponse: (Try[HttpResponse], Address))(implicit am: Materializer) =
+  def parseResponse(triedResponse: (Try[HttpResponse], Request))(implicit am: Materializer) =
     triedResponse match {
-      case (Success(response), address) =>
-        Geocode.fromHttpResponse(response).map(_.toSingerMessage(address))
-      case (Failure(exception), address) => {
-        throw exception
-      }
+      case (Success(response), request) =>
+        Request.fromHttpResponse(response).map(request.toSingerMessage)
+      case (Failure(exception), _) => throw exception
     }
 
   // This shutdown sequence was copied from another related issue: https://github.com/akka/akka-http/issues/907#issuecomment-345288919
@@ -52,13 +50,12 @@ object FlowGeocode extends App {
       .log(clazz)
       .map(
         singerMessage => {
-          val address = Address.fromSingerMessage(singerMessage)
-          (address.toHttpRequest, address)
+          val request = Request.fromSingerMessage(singerMessage)
+          (request.toAkkaRequest, request)
         }
       )
       .log(clazz)
-      .log(clazz)
-      .via(Http().cachedHostConnectionPoolHttps[Address](host = endpoint))
+      .via(Http().cachedHostConnectionPoolHttps[Request](host = endpoint))
       .log(clazz)
       .mapAsync(parallelism)(parseResponse(_))
       .map(SingerMessage.toLine)

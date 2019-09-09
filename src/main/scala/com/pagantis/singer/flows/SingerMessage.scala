@@ -24,8 +24,6 @@ object JsonProtocol extends DefaultJsonProtocol {
 
   }
 
-  implicit val addressFormat = jsonFormat4(Address.apply)
-
 }
 
 
