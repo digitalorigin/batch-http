@@ -1,12 +1,14 @@
 enablePlugins(JavaAppPackaging)
 
 lazy val root = (project in file(".")).
-  settings(
+  configs(IntegrationTest)
+  .settings(
     inThisBuild(List(
       organization := "com.pagantis",
       scalaVersion := "2.12.7"
     )),
-    name := "flow-geocode"
+    name := "batch-http",
+    Defaults.itSettings
   )
 
 trapExit := false
@@ -20,7 +22,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http" % "10.1.5",
   "com.typesafe.akka" %% "akka-testkit" % "2.5.21" % Test,
   "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.21" % Test,
-  "org.scalatest" %% "scalatest" % "3.0.5" % Test
+  "org.scalatest" %% "scalatest" % "3.0.5" % "it,test"
 )
 
 bashScriptExtraDefines += s"""APP_VERSION=${version.value}"""
