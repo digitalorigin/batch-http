@@ -7,7 +7,7 @@ and return the output as a JSON line with both the query and the API response bo
 
 # Example
 ```bash
-echo '{"query": {"address": "1600 Amphitheatre Parkway, Mountain View, 9090", "region":"es", "language":"es"}' \
+echo '{"query": {"address": "1600 Amphitheatre Parkway, Mountain View, 9090", "region":"es", "language":"es"}}' \
  | flow-ggeocode
 # will make a request to <endpoint><path>?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA
 # where <endpoint> and <path> are configurable in the application.conf file, and output another JSON

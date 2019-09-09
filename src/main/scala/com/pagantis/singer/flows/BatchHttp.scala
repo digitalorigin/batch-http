@@ -3,21 +3,20 @@ package com.pagantis.singer.flows
 import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.HttpResponse
-import akka.stream.{ActorMaterializer, Materializer}
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.StreamConverters
 import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor}
-import scala.util.{Failure, Success, Try}
+import scala.util.Success
 
-object FlowHttp extends App {
+object BatchHttp extends App {
 
   val clazz = getClass.getName
 
   // init actor system, loggers and execution context
-  implicit val system: ActorSystem = ActorSystem("Geocode")
+  implicit val system: ActorSystem = ActorSystem("BatchHttp")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val standardLogger: LoggingAdapter = Logging(system, clazz)
   implicit val ec: ExecutionContextExecutor = system.dispatcher
@@ -29,16 +28,12 @@ object FlowHttp extends App {
 
   val startTime = System.nanoTime()
 
-  def parseResponse(triedResponse: (Try[HttpResponse], Request))(implicit am: Materializer) =
-    triedResponse match {
-      case (Success(response), request) =>
-        Request.fromHttpResponse(response).map(request.toSingerMessage)
-      case (Failure(exception), _) => throw exception
-    }
-
   // This shutdown sequence was copied from another related issue: https://github.com/akka/akka-http/issues/907#issuecomment-345288919
   def shutdownSequence =
     Http().shutdownAllConnectionPools
+
+
+  import Request._
 
   val flowComputation =
     StreamConverters
@@ -46,11 +41,9 @@ object FlowHttp extends App {
       .log(clazz)
       .mapConcat(_.utf8String.split("\n").toList)
       .log(clazz)
-      .map(SingerMessage.fromLine)
-      .log(clazz)
       .map(
-        singerMessage => {
-          val request = Request.fromSingerMessage(singerMessage)
+        line => {
+          val request = fromLine(line)
           (request.toAkkaRequest, request)
         }
       )
@@ -58,7 +51,6 @@ object FlowHttp extends App {
       .via(Http().cachedHostConnectionPoolHttps[Request](host = endpoint))
       .log(clazz)
       .mapAsync(parallelism)(parseResponse(_))
-      .map(SingerMessage.toLine)
       .log(clazz)
       .runForeach(println(_))
 
