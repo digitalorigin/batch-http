@@ -1,12 +1,15 @@
+enablePlugins(JavaAppPackaging)
+
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
       organization := "com.pagantis",
       scalaVersion := "2.12.7"
     )),
-    name := "flow-ggeocode",
-    mainClass in assembly := Some("com.pagantis.singer.flows.FlowGGeocode")
+    name := "flow-geocode"
   )
+
+trapExit := false
 
 libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.3.4",
@@ -19,3 +22,5 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream-testkit" % "2.5.21" % Test,
   "org.scalatest" %% "scalatest" % "3.0.5" % Test
 )
+
+bashScriptExtraDefines += s"""APP_VERSION=${version.value}"""
