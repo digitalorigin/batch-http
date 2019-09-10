@@ -1,0 +1,5 @@
+.idea
+.env
+project/**
+target/**
+!project/plugins.sbt

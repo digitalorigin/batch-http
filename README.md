@@ -1,9 +1,60 @@
-# BatchHttp
-A tool for processing data batches through a REST API. It reads the `stdin` for JSON lines representing HTTP calls,
-it makes the call and outputs input and output also in JSON format. For example, when passed a JSON string `{"query": {"address": "1600 Amphitheatre Parkway, Mountain View, 9090", "region":"es", "language":"es"}`,
-it will make a request to `https://maps.googleapis.com/maps/api/geocode/json?region=es&language=es&address=1600+Amphitheatre+Parkway,+Mountain+View,+CA`
-and return the output as a JSON line with both the query and the API response body, provided the `endpoint` and `path` configuration values are set to
-`https://maps.googleapis.com` and `/maps/api/geocode/json` respectively.
+# BatchHttp [![CircleCI](https://circleci.com/gh/dcereijodo/batch-http.svg?style=svg&circle-token=d196d5b828e9e0debb5c25f04e7279c1f342d675)](https://circleci.com/gh/dcereijodo/batch-http)
+A tool for processing data batches through a REST API. It reads the `stdin` for JSON lines, converts each line to an HTTP call and
+then it makes the call. Finally it prints both the input line and the response to the `stdout`.
+
+For example, when passed a JSON string (compacted in a single line)
+
+```json
+ {
+   "query": {
+     "address": "1600 Amphitheatre Parkway, Mountain View, 9090",
+     "region":"es",
+     "language":"es"
+   }
+ }
+```
+
+it will make a request with a query parameters string
+```console
+region=es&language=es&address=1600+Amphitheatre+Parkway,+Mountain+View,+CA
+```
+The `endpoint` and `path` of the request can defined in the `application.conf` configuration file or they can be
+overridden by the `endpoint` and `path` keys in the input JSON payload (takes precedence). The configuration
+file also supports additional secret query parameters. So with the following configuration file we can make a
+request to the [Google Geocoding service](https://developers.google.com/maps/documentation/geocoding/intro).
+```hocon
+# application.conf
+flow {
+
+  endpoint = "maps.googleapis.com"
+  path = "/maps/api/geocode/json"
+
+  # additional parameters to be inculded in the http query if any
+  extra_params {
+    key = ${?API_KEY}
+  }
+}
+```
+
+The results is a JSON line which gets printed to the `stdout` with both the `request` and the `response` contents.
+```json
+{
+  "request": {
+    "query": {
+      "address": "1600 Amphitheatre Parkway, Mountain View, 9090",
+      "region":"es",
+      "language":"es"
+    }
+  },
+  "response": {
+    "results": [
+      {
+        "address_commpontents": ...
+      }
+    ]
+  }
+}
+```
 
 - If a `query` object is passed in the JSON, a request will be created with all parameters inside
 the object as URL parameters. `GET` method will be used.
@@ -12,8 +63,7 @@ the object as URL parameters. `GET` method will be used.
 in the request body. `POST` method will be used.
 
 ## Configuration
-You can find examples and descriptions for all configurations supported by `batch-http` in the [sample configuration file](src/main/resources/application.conf).
-All this properties can be overridden on invocation by providing appropriate [JVM arguments](https://github.com/lightbend/config).
+You can find examples and descriptions for all configurations supported by `batch-http` in the [sample configuration file](src/main/resources/application.conf). All this properties can be overridden on invocation by providing appropriate [JVM arguments](https://github.com/lightbend/config).
 
 The util uses `logback` for logging. The default logging configuration can be found in the [`logback.xml` file](src/main/resources/logback.xml).
 
@@ -28,6 +78,14 @@ And run it with
 sbt run
 ```
 
+The `packageBin` target from the [sbt-native-packager](https://www.scala-sbt.org/sbt-native-packager/) is creating a ZIP file
+that contains all depedencies and executables. For running from the distribution package:
+
+```console
+$ unzip target/universal/batch-http-<version>.zip
+$ batch-http-<version>/bin/batch-http -h
+```
+
 ## Integration Tests
-Integration tests are based on [minio](https://github.com/minio/minio) public object store service. They are skipped by
-default during build. If you want to run them, so can do so with `sbt it:test`.
+Integration tests are based on [JSONPlaceholder](https://jsonplaceholder.typicode.com/) public REST service. They are skipped by
+default during build. If you want to run them, you can do so with `sbt it:test`.
