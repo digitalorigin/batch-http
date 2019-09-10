@@ -1,0 +1,61 @@
+version: 2.1
+
+jobs:
+  it-tests:
+    docker:
+      - image: openjdk:8
+    environment:
+      SBT_VERSION: 0.13.17
+    steps:
+      - run:
+          name: Get sbt binary
+          command: |
+            apt update && apt install -y curl
+            curl -L -o sbt-$SBT_VERSION.deb https://dl.bintray.com/sbt/debian/sbt-$SBT_VERSION.deb
+            dpkg -i sbt-$SBT_VERSION.deb
+            rm sbt-$SBT_VERSION.deb
+            apt-get clean && apt-get autoclean
+      - checkout
+      - restore_cache:
+          key: sbt-cache
+      - run:
+          name: SBT Test
+          command: sbt it:test
+  build:
+    docker:
+      - image: openjdk:8
+    environment:
+      SBT_VERSION: 0.13.17
+    steps:
+      - run:
+          name: Get sbt binary
+          command: |
+            apt update && apt install -y curl
+            curl -L -o sbt-$SBT_VERSION.deb https://dl.bintray.com/sbt/debian/sbt-$SBT_VERSION.deb
+            dpkg -i sbt-$SBT_VERSION.deb
+            rm sbt-$SBT_VERSION.deb
+            apt-get clean && apt-get autoclean
+      - checkout
+      - restore_cache:
+          key: sbt-cache
+      - run:
+          name: SBT Test
+          command: sbt test
+      - run:
+          name: SBT Package
+          command: sbt universal:packageBin
+      - save_cache:
+          key: sbt-cache
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
+      - it-tests:
+          requires:
+            - build
