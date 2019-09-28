@@ -1,6 +1,6 @@
 package com.pagantis.singer.flows
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Props}
 import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
@@ -34,12 +34,16 @@ object BatchHttp extends App {
   val parallelism = config.getInt("flow.parallelism")
   val frameLength = config.getInt("flow.frame_length")
 
-  val startTime = System.nanoTime()
-
   // This shutdown sequence was copied from another related issue: https://github.com/akka/akka-http/issues/907#issuecomment-345288919
-  def shutdownSequence =
-    Http().shutdownAllConnectionPools
+  def shutdownSequence = {
+    for {
+      http <- Http().shutdownAllConnectionPools()
+      akka <- system.terminate()
+    } yield akka
+  }
 
+
+  val counter = system.actorOf(Props[CountLogger], "counter")
 
   import Request._
 
@@ -61,12 +65,14 @@ object BatchHttp extends App {
       .log(clazz)
       .mapAsync(parallelism)(parseResponse(_))
       .log(clazz)
+      .map {
+        line: String =>
+          counter ! 1
+          line
+      }
       .runForeach(println(_))
 
   Await.ready(flowComputation, Duration.Inf)
-
-  standardLogger.info(s"Total execution time: ${(System.nanoTime - startTime)/1000000000} seconds")
-
   Await.ready(shutdownSequence, Duration.Inf)
 
   flowComputation.value match {
