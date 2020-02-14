@@ -95,7 +95,7 @@ that contains all dependencies and executables. For running from the distributio
 ```console
 $ unzip target/universal/batch-http-<version>.zip
 $ batch-http-<version>/bin/batch-http -h
-$ echo '{"body": {"userId": 1, "title": "foo", "body": "bar"}, "path": "/posts", "context": "CvKL8"}' | batch-http-<version>/bin/batch-http -Dflow.endpoint=jsonplaceholder.typicode.com 2&> /dev/null
+$ echo '{"request": {"method": "POST", "body": {"userId": 1, "title": "foo", "body": "bar"}, "path": "/posts", "context": "CvKL8"}}' | batch-http-<version>/bin/batch-http -Dflow.endpoint=jsonplaceholder.typicode.com 2&> /dev/null
 ```
 
 ## Integration Tests
